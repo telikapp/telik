@@ -23,6 +23,8 @@ Homebridge, server or iPhone app.
 - A TV tile in Apple Home with power, volume and app inputs.
 - Experimental TV audio output to a HomePod.
 - A Headphones button on the home screen connects and disconnects AirPods. An optional setting connects them when the TV turns on. Needs network debugging on the TV.
+- Optional control by AI agents such as Claude Code over MCP in the local network, with a token. Off by default.
+  See [docs/MCP.md](docs/MCP.md).
 - No root. After setup, only the Headphones button uses a local ADB connection. Services start after the TV boots.
 
 ## Limits

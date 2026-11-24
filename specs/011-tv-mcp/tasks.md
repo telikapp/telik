@@ -25,10 +25,12 @@
 
 ## Phase 3: Structured Android data (D6)
 
-- [ ] T020 Add `AxmlParser` and `ManifestSummary`: the binary manifest, the filters, the deep links. Unit tests with a test writer.
-- [ ] T021 Add `app_info`, `open`, `search`, `media`, `tv_rows`, `debug`, `recipe`.
-- [ ] T022 Check the read tools on the TV with Claude Code: `screen`, `media`, `apps`, `app_info`, `tv_rows`.
-- [ ] T023 Check the action tools on the TV: `open` with deep links, `search`, `media` pause, play and skip.
+- [x] T020 Add `AxmlParser` and `ManifestSummary`: the binary manifest, the filters, the deep links. Unit tests with a test writer.
+- [x] T021 Add `app_info`, `open`, `search`, `media`, `tv_rows`, `debug`, `recipe`.
+- [x] T022 Check the read tools on the TV with Claude Code: `screen`, `media`, `apps`, `app_info`, `tv_rows`.
+  - 2026-11-24: `claude -p` with `--mcp-config`, the token from the secret store. Output in `research.md`.
+- [x] T023 Check the action tools on the TV: `open` with deep links, `search`, `media` pause, play and skip.
+  - 2026-11-24: results in `research.md`. KinoPub took no `pause` and no `seek` from the transport controls. `search` into KinoPub failed with a start error.
 - [ ] T024 `media`: check the state after play and pause. If it did not change, send the media key to the session, then the play/pause key of the remote. Check the position after a seek and say when the app ignores it.
 - [ ] T025 Give the class and the message of the exception when an activity start fails.
 - [ ] T026 Find why `search` into KinoPub `InfoActivity` fails (T025 shows the cause).
@@ -36,12 +38,12 @@
 
 ## Phase 4: The three apps (research.md)
 
-- [ ] T030 Read the manifests of YouTube, KinoPub and Apple TV: version, activities, filters, deep links, providers.
-- [ ] T031 Read MediaSession, Watch Next and the preview channels of the three apps.
-- [ ] T032 Check the deep links of each app on the TV, the UI tree of the main screens, and the search.
-- [ ] T033 Write the tested steps of each app into `Recipes.kt` and `research.md`.
+- [x] T030 Read the manifests of YouTube, KinoPub and Apple TV: version, activities, filters, deep links, providers.
+- [x] T031 Read MediaSession, Watch Next and the preview channels of the three apps.
+- [x] T032 Check the deep links of each app on the TV, the UI tree of the main screens, and the search.
+- [x] T033 Write the tested steps of each app into `Recipes.kt` and `research.md`.
 
 ## Phase 5: Release
 
-- [ ] T040 Add `docs/MCP.md`, a README line, and the changelog `23.txt` in English and Russian.
+- [x] T040 Add `docs/MCP.md`, a README line, and the changelog `23.txt` in English and Russian.
 - [ ] T041 Open the stacked pull requests. CI must pass.
