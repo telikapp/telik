@@ -185,6 +185,7 @@ class AirPlayService : LifecycleService(), RaopCallbackHandler, LogListener {
     private var mediaReceiver: BroadcastReceiver? = null
     private var volumeReceiver: BroadcastReceiver? = null
     private val shortcuts by lazy { io.github.henry753951.airplayremote.shortcuts.ShortcutServer(this) }
+    private val mcp by lazy { io.github.henry753951.airplayremote.mcp.McpServer(this) }
     @Volatile private var _syncClientVol = Prefs.SYNC_CLIENT_VOLUME.def
     private var _pendingServerVolEchoes = 0
     // senders park volume at -30 as route closes
@@ -338,6 +339,11 @@ class AirPlayService : LifecycleService(), RaopCallbackHandler, LogListener {
         lifecycleScope.launch {
             prefs.observe { this[Prefs.SHORTCUTS_ENABLED] }.collect { on ->
                 if (on) shortcuts.start() else shortcuts.stop()
+            }
+        }
+        lifecycleScope.launch {
+            prefs.observe { this[Prefs.MCP_ENABLED] }.collect { on ->
+                if (on) mcp.start() else mcp.stop()
             }
         }
         lifecycleScope.launch {
@@ -645,6 +651,7 @@ class AirPlayService : LifecycleService(), RaopCallbackHandler, LogListener {
     override fun onDestroy() {
         stopServer()
         shortcuts.stop()
+        mcp.stop()
         remote.close()
         dacpPlayer.release()
         mediaReceiver?.let {
