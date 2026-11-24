@@ -367,6 +367,8 @@ class TvTools(private val context: Context, private val events: TvEvents) {
     private fun startChecked(intent: Intent): String {
         val r = pm.resolveActivity(intent, 0) ?: throw ToolError("no activity takes this intent")
         val target = "${r.activityInfo.packageName}/${r.activityInfo.name}"
+        // Explicit: a filter without CATEGORY_DEFAULT (SEARCH of KinoPub) takes only an explicit intent.
+        intent.setClassName(r.activityInfo.packageName, r.activityInfo.name)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         // The accessibility service is the start context: Android 14 blocks starts from a background service.
         runCatching { (RemoteAccessibilityService.instance ?: context).startActivity(intent) }
@@ -392,7 +394,6 @@ class TvTools(private val context: Context, private val events: TvEvents) {
         a.strOrNull("package")?.let { intent.setPackage(it) }
         a.optJSONObject("extras")?.let { e -> e.keys().forEach { k -> intent.putExtra(k, e.optString(k)) } }
         if (intent.action in BLOCKED) throw ToolError("action not allowed")
-        intent.addCategory(Intent.CATEGORY_DEFAULT)
         intent.flags = intent.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION).inv()
         return settle { "opened ${startChecked(intent)}" }
     }
