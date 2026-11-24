@@ -167,7 +167,12 @@ class TvTools(private val context: Context, private val events: TvEvents) {
         val w = events.waitQuiet(before, needChange = true, quietMs = QUIET_MS, timeoutMs = timeoutMs)
         val pkg = RemoteAccessibilityService.instance?.rootInActiveWindow?.packageName?.toString() ?: events.pkg
         // Apps that draw their own UI (YouTube Cobalt, Apple TV) send no accessibility events.
-        ToolResult("$what; ${if (w.ok) "screen changed in ${w.ms} ms" else "no accessibility event"}; ${header(pkg)}")
+        val result = when {
+            w.ok -> "screen changed in ${w.ms} ms"
+            w.version > before -> "screen still changing after ${w.ms} ms"
+            else -> "no accessibility event"
+        }
+        ToolResult("$what; $result; ${header(pkg)}")
     }
 
     private fun node(id: Int): AccessibilityNodeInfo {

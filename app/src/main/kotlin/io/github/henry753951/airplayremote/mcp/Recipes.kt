@@ -21,7 +21,7 @@ object Recipes {
             launch resumes the last video in PlayerActivity: media action=pause at once, or key back
             title page: open uri=https://kino.pub/item/view/<id> package=watch.kino, then find Смотреть, act click
             ids: tv_rows kind=watch_next|preview package=watch.kino; open uri=tvrecommendation://app/playback/0/<id> resumes it
-            search: find action_search, act click, type text=<words> submit=true, screen (cards with year and rating)
+            search: find action_search, act click, type text=<words> submit=true, screen (cards with year and rating). The SEARCH intent shows no results
             now playing: media package=watch.kino (state, pos, len; no title). pause/play: media (falls back to the play/pause key)
             seek: the app ignores seek: in the player use key right/left
             player tree: only player_view; key ok shows the controls

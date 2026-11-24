@@ -22,6 +22,10 @@
   - 2026-11-24: passed with the screenshot tool. YouTube gave no tree, so the agent walked the menu with pictures. The key tools said "no screen change": Cobalt sends no accessibility events.
 - [ ] T017 Say "no accessibility event" instead of "no screen change". Wait 800 ms after a key, not 2 s.
 - [ ] T018 Check T015, T017 and the media fallback (T024) on the TV after the user's movie.
+  - 2026-11-24 22:15: T015 passed. YouTube gave `nodes=1` and the note. T017 passed: "no accessibility event" in YouTube.
+  - In KinoPub, events came but the screen did not get quiet, and the message said "no accessibility event". Now it says "screen still changing".
+  - The media fallback is not checked yet: the TV was busy again.
+- [ ] T019 `tap` and the tap fallback of `act`: the test TV cancelled the gesture (it has no touch screen). On such TVs, use node actions and keys.
 
 ## Phase 3: Structured Android data (D6)
 
@@ -32,8 +36,10 @@
 - [x] T023 Check the action tools on the TV: `open` with deep links, `search`, `media` pause, play and skip.
   - 2026-11-24: results in `research.md`. KinoPub took no `pause` and no `seek` from the transport controls. `search` into KinoPub failed with a start error.
 - [ ] T024 `media`: check the state after play and pause. If it did not change, send the media key to the session, then the play/pause key of the remote. Check the position after a seek and say when the app ignores it.
-- [ ] T025 Give the class and the message of the exception when an activity start fails.
-- [ ] T026 Find why `search` into KinoPub `InfoActivity` fails (T025 shows the cause).
+- [x] T025 Give the class and the message of the exception when an activity start fails.
+- [x] T026 Find why `search` into KinoPub `InfoActivity` fails (T025 shows the cause).
+  - 2026-11-24: `ActivityNotFoundException`. The SEARCH filter has no `CATEGORY_DEFAULT`. Telik now starts the resolved activity with an explicit intent.
+  - KinoPub then starts, but it shows no results. Use its search button.
 - [ ] T027 Check `debug` on the TV. It needs one approval of the adb key on the TV screen.
 
 ## Phase 4: The three apps (research.md)
