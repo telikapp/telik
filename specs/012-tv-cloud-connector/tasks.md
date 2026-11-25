@@ -38,3 +38,4 @@
 - [ ] T034 Check how long the tunnel stays up in standby (hours, a night). It depends on the network policy of the TV.
 - [x] T032 Docs, README, changelog. Pull request stacked on spec 011.
   - 2026-11-25: telikapp/telik#37, stacked on #36.
+- [x] T040 Release 3.2.0: version 23, tag `v3.2.0`.
