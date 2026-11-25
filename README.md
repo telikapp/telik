@@ -26,7 +26,7 @@ Homebridge, server or iPhone app.
 - Optional control by AI agents such as Claude Code over MCP in the local network, with a token. Off by default.
   With a Cloudflare tunnel, Claude on the phone and on claude.ai connects too, after an OK on the TV.
   See [docs/MCP.md](docs/MCP.md).
-- No root. After setup, only the Headphones button uses a local ADB connection. Services start after the TV boots.
+- No root. After setup, only the Headphones button and the `debug` tool of agents use a local ADB connection. Services start after the TV boots.
 
 ## Limits
 
