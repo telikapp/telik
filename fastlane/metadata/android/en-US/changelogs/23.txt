@@ -1,0 +1,1 @@
+AI agents such as Claude Code can control the TV over MCP in the local network: read the screen, open apps, press keys. Off by default, needs a token.

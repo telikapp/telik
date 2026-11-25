@@ -1018,8 +1018,34 @@ private fun remoteItems(viewModel: MainViewModel): List<TvItem> {
             stringResource(R.string.tv_remote_dpad), stringResource(R.string.tv_remote_dpad_short),
             detail = stringResource(R.string.tv_remote_dpad_desc)
         ),
-    ) + shortcutItems(viewModel)
+    ) + shortcutItems(viewModel) + mcpItems(viewModel)
 }
+
+/** Spec 011: the MCP server for agents. The token and the command show only while it is on. */
+@Composable
+private fun mcpItems(viewModel: MainViewModel): List<TvItem> {
+    val ctx = LocalContext.current
+    val on by viewModel.pref(Prefs.MCP_ENABLED).collectAsState()
+    val toggleItem = toggle(viewModel, Prefs.MCP_ENABLED, R.string.setting_mcp, R.string.setting_mcp_desc)
+    if (!on) return listOf(toggleItem)
+    var token by remember { mutableStateOf(io.github.henry753951.airplayremote.mcp.McpToken.get(ctx)) }
+    val ip = remember { io.github.henry753951.airplayremote.platform.LocalNetworkAddress.get(ctx) ?: "TV" }
+    val url = "http://$ip:${io.github.henry753951.airplayremote.mcp.McpHttp.PORT}${io.github.henry753951.airplayremote.mcp.McpHttp.PATH}"
+    return listOf(
+        toggleItem,
+        TvItem(
+            stringResource(R.string.setting_mcp_token), token,
+            detail = stringResource(R.string.setting_mcp_command, mcpCommand(url, token)),
+        ),
+        TvItem(
+            stringResource(R.string.setting_shortcuts_renew), stringResource(R.string.setting_shortcuts_renew_desc),
+            onClick = { token = io.github.henry753951.airplayremote.mcp.McpToken.renew(ctx) },
+        ),
+    )
+}
+
+internal fun mcpCommand(url: String, token: String) =
+    "claude mcp add --transport http telik $url --header \"Authorization: Bearer $token\""
 
 /** Spec 006 US7: Siri Shortcuts. The token shows only while the endpoint is on. */
 @Composable

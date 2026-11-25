@@ -59,6 +59,7 @@ open class RemoteAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event != null) io.github.henry753951.airplayremote.mcp.McpServer.onAccessibilityEvent(this, event)
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             event.packageName?.let {
                 dev.tvhomekit.HomeKitService.tv?.onForegroundPackage(it.toString())
@@ -119,6 +120,11 @@ open class RemoteAccessibilityService : AccessibilityService() {
             return execInputKeyEvent("KEYCODE_MENU") || performGlobalAction(GLOBAL_ACTION_BACK)
         }
 
+        return rawKey(lowerName)
+    }
+
+    /** A key without the menu binding of the iPhone remote: the agent of spec 011 gets the real key. */
+    fun rawKey(lowerName: String): Boolean {
         systemKey(lowerName)?.let { return it }
 
         return when (lowerName) {
@@ -220,6 +226,20 @@ open class RemoteAccessibilityService : AccessibilityService() {
         } else {
             connection.commitText(text, 1, null)
         }
+    }
+
+    /** Spec 011: text for the agent. False when no app has a text field open. */
+    fun agentText(text: String, submit: Boolean): Boolean {
+        if (Build.VERSION.SDK_INT < 33) return false
+        val connection = inputMethod?.currentInputConnection ?: return false
+        if (!editorActive) return false
+        if (text.isNotEmpty()) connection.commitText(text, 1, null)
+        if (submit) {
+            connection.performEditorAction(
+                if (editorAction == EditorInfo.IME_ACTION_NONE) EditorInfo.IME_ACTION_DONE else editorAction,
+            )
+        }
+        return true
     }
 
     fun deleteBackward(count: Int) {

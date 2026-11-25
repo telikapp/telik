@@ -58,6 +58,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
     val autoStart by viewModel.pref(Prefs.AUTO_START).collectAsState()
     val bootAutoStart by viewModel.pref(Prefs.BOOT_AUTO_START).collectAsState()
     val shortcutsOn by viewModel.pref(Prefs.SHORTCUTS_ENABLED).collectAsState()
+    val mcpOn by viewModel.pref(Prefs.MCP_ENABLED).collectAsState()
     val runInBackground by viewModel.pref(Prefs.RUN_IN_BACKGROUND).collectAsState()
     val serverPort by viewModel.pref(Prefs.SERVER_PORT).collectAsState()
     val audioLatencyMs by viewModel.pref(Prefs.AUDIO_LATENCY_MS).collectAsState()
@@ -178,6 +179,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
         )
 
         ShortcutsSection(shortcutsOn) { viewModel.set(Prefs.SHORTCUTS_ENABLED, it) }
+        McpSection(mcpOn) { viewModel.set(Prefs.MCP_ENABLED, it) }
 
         SectionHeader(stringResource(R.string.section_display))
 
@@ -758,6 +760,39 @@ private fun ShortcutsSection(on: Boolean, onChange: (Boolean) -> Unit) {
     ListItem(
         modifier = Modifier.dpadFocus(RectangleShape).toggleable(value = false, role = Role.Button, onValueChange = {
             token = io.github.henry753951.airplayremote.shortcuts.ShortcutToken.renew(ctx)
+        }),
+        headlineContent = { Text(stringResource(R.string.setting_shortcuts_renew)) },
+        supportingContent = { Text(stringResource(R.string.setting_shortcuts_renew_desc)) },
+    )
+}
+
+/** Spec 011: the MCP server for agents. The token shows only while it is on. */
+@Composable
+private fun McpSection(on: Boolean, onChange: (Boolean) -> Unit) {
+    val ctx = LocalContext.current
+    SectionHeader(stringResource(R.string.section_mcp))
+    SettingSwitch(
+        title = stringResource(R.string.setting_mcp),
+        description = stringResource(R.string.setting_mcp_desc),
+        checked = on,
+        onCheckedChange = onChange,
+    )
+    if (!on) return
+    var token by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(io.github.henry753951.airplayremote.mcp.McpToken.get(ctx)) }
+    val ip = androidx.compose.runtime.remember { io.github.henry753951.airplayremote.platform.LocalNetworkAddress.get(ctx) ?: "TV" }
+    val url = "http://$ip:${io.github.henry753951.airplayremote.mcp.McpHttp.PORT}${io.github.henry753951.airplayremote.mcp.McpHttp.PATH}"
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.setting_mcp_token)) },
+        supportingContent = {
+            Text(
+                token + "\n\n" + stringResource(R.string.setting_mcp_command, mcpCommand(url, token)),
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+            )
+        },
+    )
+    ListItem(
+        modifier = Modifier.dpadFocus(RectangleShape).toggleable(value = false, role = Role.Button, onValueChange = {
+            token = io.github.henry753951.airplayremote.mcp.McpToken.renew(ctx)
         }),
         headlineContent = { Text(stringResource(R.string.setting_shortcuts_renew)) },
         supportingContent = { Text(stringResource(R.string.setting_shortcuts_renew_desc)) },

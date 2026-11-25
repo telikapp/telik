@@ -392,6 +392,11 @@
     <string name="setting_shortcuts_example">In Shortcuts, add “Get Contents of URL”, method POST, header Authorization: Bearer and the token. Example: %1$s. Other paths: /v1/input?hdmi=1, /v1/message?text=…, /v1/key?name=pause.</string>
     <string name="setting_shortcuts_renew">New token</string>
     <string name="setting_shortcuts_renew_desc">The old token stops working.</string>
+    <string name="section_mcp">Agent control (MCP)</string>
+    <string name="setting_mcp">Control by AI agents</string>
+    <string name="setting_mcp_desc">An agent on a computer in this network, for example Claude Code, reads the screen, opens apps and presses keys through MCP. Needs the token and accessibility access. Off by default.</string>
+    <string name="setting_mcp_token">Agent token</string>
+    <string name="setting_mcp_command">On the computer, run: %1$s</string>
     <string name="tv_album">iCloud shared album</string>
     <string name="tv_album_desc">The screensaver shows its photos between the videos. The album needs Public Website on in Photos on the iPhone.</string>
     <string name="tv_album_set">Set</string>
