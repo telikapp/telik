@@ -347,6 +347,13 @@ class AirPlayService : LifecycleService(), RaopCallbackHandler, LogListener {
             }
         }
         lifecycleScope.launch {
+            prefs.observe { this[Prefs.MCP_ENABLED] to this[Prefs.CLOUD_ENABLED] }.collect {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    io.github.henry753951.airplayremote.cloud.CloudTunnel.sync(this@AirPlayService)
+                }
+            }
+        }
+        lifecycleScope.launch {
             prefs.observe { this[Prefs.SYNC_CLIENT_VOLUME] }.collect {
                 _syncClientVol = it
                 _clientVolDriveEnd()
@@ -652,6 +659,7 @@ class AirPlayService : LifecycleService(), RaopCallbackHandler, LogListener {
         stopServer()
         shortcuts.stop()
         mcp.stop()
+        io.github.henry753951.airplayremote.cloud.CloudTunnel.stop()
         remote.close()
         dacpPlayer.release()
         mediaReceiver?.let {

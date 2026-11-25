@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+import java.io.File
+import java.net.URI
+import java.security.MessageDigest
 import java.util.Properties
 
 val localProps = Properties().apply {
@@ -161,6 +164,35 @@ val checkRemoteLibrary = tasks.register("checkRemoteLibrary") {
 }
 tasks.named("preBuild") { dependsOn(checkRemoteLibrary) }
 
+// Spec 012: cloudflared for the claude.ai tunnel. A pinned release, checked by SHA-256, packed as a native
+// library so that Android extracts it to nativeLibraryDir, where the app can run it.
+val cloudflaredVersion = "2026.11.2"
+val cloudflaredSha256 = "d219494581180764c6d2454409691bb06879d01b43cdeae12476070a7e4e4762"
+val cloudflaredJniLibs = layout.buildDirectory.dir("generated/cloudflared/jniLibs")
+val fetchCloudflared = tasks.register("fetchCloudflared") {
+    inputs.property("version", cloudflaredVersion)
+    inputs.property("sha256", cloudflaredSha256)
+    outputs.dir(cloudflaredJniLibs)
+    doLast {
+        val cache = gradle.gradleUserHomeDir.resolve("caches/telik-cloudflared/$cloudflaredVersion/cloudflared-linux-arm")
+        fun sha(f: File) = MessageDigest.getInstance("SHA-256").digest(f.readBytes())
+            .joinToString("") { "%02x".format(it) }
+        if (!cache.isFile || sha(cache) != cloudflaredSha256) {
+            cache.parentFile.mkdirs()
+            val url = "https://github.com/cloudflare/cloudflared/releases/download/$cloudflaredVersion/cloudflared-linux-arm"
+            val tmp = File(cache.path + ".part")
+            URI(url).toURL().openStream().use { input -> tmp.outputStream().use { input.copyTo(it) } }
+            check(sha(tmp) == cloudflaredSha256) { "cloudflared $cloudflaredVersion: wrong SHA-256" }
+            check(tmp.renameTo(cache)) { "cannot write $cache" }
+        }
+        val out = cloudflaredJniLibs.get().asFile.resolve("armeabi-v7a/libcloudflared.so")
+        out.parentFile.mkdirs()
+        cache.copyTo(out, overwrite = true)
+    }
+}
+tasks.named("preBuild") { dependsOn(fetchCloudflared) }
+android.sourceSets.getByName("main").jniLibs.directories.add(cloudflaredJniLibs.get().asFile.path)
+
 android {
     androidResources {
         localeFilters += listOf("en", "ru", "zh-rTW")
@@ -168,6 +200,11 @@ android {
         generateLocaleConfig = true
     }
     packaging {
+        jniLibs {
+            // Spec 012: extract the native libraries, so that libcloudflared.so can run.
+            useLegacyPackaging = true
+            keepDebugSymbols += "**/libcloudflared.so"
+        }
         resources {
             excludes += setOf(
                 "org/bouncycastle/pqc/**",

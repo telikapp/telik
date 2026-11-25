@@ -65,9 +65,20 @@ class McpServer(private val context: Context) {
             return
         }
         val local = McpHttp.isLocal(client.inetAddress)
-        val (status, body) = protocol.route(request, local, McpToken.get(context))
-        Log.i(TAG, "${request.method} ${request.path} ${describe(request, status)} -> $status")
-        runCatching { out.write(McpHttp.response(status, body)); out.flush() }
+        // Spec 012 D3: cloudflared connects from the loopback address and adds Cf-Connecting-Ip.
+        val remote = client.inetAddress.isLoopbackAddress && request.header("cf-connecting-ip") != null
+        val host = request.header("host")?.takeIf { HOST.matches(it) } ?: "${client.localAddress.hostAddress}:${McpHttp.PORT}"
+        val base = if (remote) "https://${host.substringBefore(':')}" else "http://$host"
+        val routes = web(context)
+        val page = if (local) routes.handle(request, remote, base) else null
+        val answer = page ?: run {
+            val token = McpToken.get(context)
+            val oauth = oauth(context)
+            val (status, body) = protocol.route(request, local, remote) { ShortcutApi.authorized(it, token) || oauth.valid(it) }
+            WebResponse(status, body, headers = if (status == 401) routes.challenge(base) else emptyMap())
+        }
+        Log.i(TAG, "${if (remote) "remote " else ""}${request.method} ${request.path} ${describe(request, answer.status)} -> ${answer.status}")
+        runCatching { out.write(McpHttp.response(answer.status, answer.body, answer.type, answer.headers)); out.flush() }
     }
 
     /** The JSON-RPC method and the tool name, for the log. No arguments: they can have typed text. */
@@ -86,6 +97,32 @@ class McpServer(private val context: Context) {
         @Volatile var running = false
             private set
         private val activities = ConcurrentHashMap<String, Boolean>()
+        private val HOST = Regex("[A-Za-z0-9.-]{1,253}(:[0-9]{1,5})?")
+        val setupCode = io.github.henry753951.airplayremote.cloud.SetupCode()
+        @Volatile private var oauthServer: OAuthServer? = null
+        @Volatile private var webRoutes: WebRoutes? = null
+
+        /** The OAuth server of spec 012, with its state in a private file. */
+        @Synchronized
+        fun oauth(context: Context): OAuthServer = oauthServer ?: run {
+            val app = context.applicationContext
+            val prefs = app.getSharedPreferences("oauth", Context.MODE_PRIVATE)
+            OAuthServer(object : OAuthStore {
+                override fun load() = prefs.getString("state", null)
+                override fun save(json: String) { prefs.edit().putString("state", json).apply() }
+            }).also { s ->
+                s.onPending = { p -> AgentApprove.show(app, p) }
+                oauthServer = s
+            }
+        }
+
+        @Synchronized
+        private fun web(context: Context): WebRoutes = webRoutes ?: WebRoutes(oauth(context), setupCode) { token ->
+            val app = context.applicationContext
+            io.github.henry753951.airplayremote.cloud.CloudToken.set(app, token).also { ok ->
+                if (ok) io.github.henry753951.airplayremote.cloud.CloudTunnel.sync(app)
+            }
+        }.also { webRoutes = it }
 
         /** Called by the accessibility service for each event. Costs nothing while the server is off. */
         fun onAccessibilityEvent(service: AccessibilityService, event: AccessibilityEvent) {

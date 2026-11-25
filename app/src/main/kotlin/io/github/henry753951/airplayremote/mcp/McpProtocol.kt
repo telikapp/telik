@@ -62,11 +62,18 @@ class McpProtocol(private val tools: List<McpTool>, private val version: String)
     private val byName = tools.associateBy { it.name }
 
     /** The HTTP answer for one request: the status and the body (null for an empty body). */
-    fun route(request: McpHttp.Request, clientLocal: Boolean, token: String): Pair<Int, String?> {
+    fun route(request: McpHttp.Request, clientLocal: Boolean, token: String): Pair<Int, String?> =
+        route(request, clientLocal, remote = false) { ShortcutApi.authorized(it, token) }
+
+    /**
+     * [remote] is a request through the tunnel of spec 012. It needs a token like a local one, but the Origin rule
+     * is for the local network only: a web page cannot reach the TV through the public host without a token.
+     */
+    fun route(request: McpHttp.Request, clientLocal: Boolean, remote: Boolean, authorized: (String?) -> Boolean): Pair<Int, String?> {
         if (!clientLocal) return 403 to error(null, -32001, "local network only")
-        if (request.header("origin") != null) return 403 to error(null, -32001, "browser requests are not allowed")
+        if (!remote && request.header("origin") != null) return 403 to error(null, -32001, "browser requests are not allowed")
         if (request.path != McpHttp.PATH) return 404 to null
-        if (!ShortcutApi.authorized(request.header("authorization"), token)) return 401 to error(null, -32001, "unauthorized")
+        if (!authorized(request.header("authorization"))) return 401 to error(null, -32001, "unauthorized")
         if (request.method != "POST") return 405 to null
         val body = handle(String(request.body, Charsets.UTF_8)) ?: return 202 to null
         return 200 to body

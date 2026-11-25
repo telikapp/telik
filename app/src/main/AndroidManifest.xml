@@ -173,6 +173,7 @@
                 <action android:name="io.github.henry753951.airplayremote.SET_SETTING" />
                 <action android:name="io.github.henry753951.airplayremote.LIST_SETTINGS" />
                 <action android:name="io.github.henry753951.airplayremote.SET_MCP_TOKEN" />
+                <action android:name="io.github.henry753951.airplayremote.SET_CLOUD_TOKEN" />
                 <action android:name="io.github.jqssun.airplay.SET_SETTING" />
                 <action android:name="io.github.jqssun.airplay.LIST_SETTINGS" />
             </intent-filter>
