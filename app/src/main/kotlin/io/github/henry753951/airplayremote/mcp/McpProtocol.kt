@@ -133,9 +133,9 @@ class McpProtocol(private val tools: List<McpTool>, private val version: String)
     companion object {
         val VERSIONS = listOf("2025-11-25", "2025-06-18", "2025-03-26")
         const val INSTRUCTIONS =
-            "Controls an Android TV with structured data: screen, find, act, key, apps, launch. " +
+            "Controls an Android TV with structured data: screen/find/act, apps/app_info/open, media, tv_rows. " +
                 "Action tools wait until the screen is quiet and give v=<screen version>. Node ids come from the last screen or find. " +
-                "Some apps (YouTube, Apple TV) give no tree: use key there."
+                "Some apps (YouTube, Apple TV) give no tree: use recipe, deep links (open), media and key there."
     }
 }
 

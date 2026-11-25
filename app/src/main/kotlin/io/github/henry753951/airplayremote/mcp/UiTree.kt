@@ -38,7 +38,7 @@ object UiTree {
             n.editable || n.checkable || n.focused
     }
 
-    const val NO_TREE = "(no text in the tree: the app draws its own UI. Use key)"
+    const val NO_TREE = "(no text in the tree: the app draws its own UI. Use recipe, app_info deep links, open, media and key)"
 
     fun role(cls: String): String = cls.substringAfterLast('.').ifEmpty { "View" }
 
