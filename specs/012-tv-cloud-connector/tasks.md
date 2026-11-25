@@ -36,4 +36,5 @@
 - [x] T033 Add the `power` tool: status, standby, on. The owner asked for it on 2026-11-25.
   - 2026-11-25: off gave standby. After 20 s in standby the tunnel still answered. On woke the TV in 601 ms.
 - [ ] T034 Check how long the tunnel stays up in standby (hours, a night). It depends on the network policy of the TV.
-- [ ] T032 Docs, README, changelog. Pull request stacked on spec 011.
+- [x] T032 Docs, README, changelog. Pull request stacked on spec 011.
+  - 2026-11-25: telikapp/telik#37, stacked on #36.
