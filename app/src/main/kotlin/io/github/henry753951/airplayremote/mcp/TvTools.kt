@@ -241,7 +241,8 @@ class TvTools(private val context: Context, private val events: TvEvents) {
 
     private fun key(key: String, times: Int): ToolResult {
         val s = service()
-        return settle(KEY_SETTLE_MS) {
+        // Home starts the launcher: it needs the full wait, as an app start.
+        return settle(if (key == "home") SETTLE_MS else KEY_SETTLE_MS) {
             repeat(times) { i ->
                 val ok = when (key) {
                     "back" -> s.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)

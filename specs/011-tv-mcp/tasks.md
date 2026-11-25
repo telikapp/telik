@@ -20,11 +20,12 @@
 - [x] T015 [US1] Drop the 10x10 px placeholders of YouTube (Cobalt) and say "no text in the tree" with the structured paths. Remove U+2060 and other invisible characters from text and search (KinoPub). Unit tests.
 - [x] T016 [US1, US2, US3] Check on the TV with Claude Code: launch YouTube, key, key ok, media pause, key back, key home.
   - 2026-11-24: passed with the screenshot tool. YouTube gave no tree, so the agent walked the menu with pictures. The key tools said "no screen change": Cobalt sends no accessibility events.
-- [ ] T017 Say "no accessibility event" instead of "no screen change". Wait 800 ms after a key, not 2 s.
-- [ ] T018 Check T015, T017 and the media fallback (T024) on the TV after the user's movie.
+- [x] T017 Say "no accessibility event" instead of "no screen change". Wait 800 ms after a key, not 2 s.
+- [x] T018 Check T015, T017 and the media fallback (T024) on the TV after the user's movie.
   - 2026-11-24 22:15: T015 passed. YouTube gave `nodes=1` and the note. T017 passed: "no accessibility event" in YouTube.
   - In KinoPub, events came but the screen did not get quiet, and the message said "no accessibility event". Now it says "screen still changing".
-  - The media fallback is not checked yet: the TV was busy again.
+  - 2026-11-25: the media fallback passed in the KinoPub player: pause, play, pause. The seek of 30 s gave the error "the app did not seek".
+  - `key home` gave the old app: the launcher came after the wait of 800 ms. Home now waits 2 s.
 - [ ] T019 `tap` and the tap fallback of `act`: the test TV cancelled the gesture (it has no touch screen). On such TVs, use node actions and keys.
 
 ## Phase 3: Structured Android data (D6)
@@ -35,12 +36,13 @@
   - 2026-11-24: `claude -p` with `--mcp-config`, the token from the secret store. Output in `research.md`.
 - [x] T023 Check the action tools on the TV: `open` with deep links, `search`, `media` pause, play and skip.
   - 2026-11-24: results in `research.md`. KinoPub took no `pause` and no `seek` from the transport controls. `search` into KinoPub failed with a start error.
-- [ ] T024 `media`: check the state after play and pause. If it did not change, send the media key to the session, then the play/pause key of the remote. Check the position after a seek and say when the app ignores it.
+- [x] T024 `media`: check the state after play and pause. If it did not change, send the media key to the session, then the play/pause key of the remote. Check the position after a seek and say when the app ignores it.
 - [x] T025 Give the class and the message of the exception when an activity start fails.
 - [x] T026 Find why `search` into KinoPub `InfoActivity` fails (T025 shows the cause).
   - 2026-11-24: `ActivityNotFoundException`. The SEARCH filter has no `CATEGORY_DEFAULT`. Telik now starts the resolved activity with an explicit intent.
   - KinoPub then starts, but it shows no results. Use its search button.
-- [ ] T027 Check `debug` on the TV. It needs one approval of the adb key on the TV screen.
+- [x] T027 Check `debug` on the TV. It needs one approval of the adb key on the TV screen.
+  - 2026-11-25: `activity`, `media` and `logcat` of `dev.telik.tv.dev` gave the data. A package name with a command in it was refused.
 
 ## Phase 4: The three apps (research.md)
 
