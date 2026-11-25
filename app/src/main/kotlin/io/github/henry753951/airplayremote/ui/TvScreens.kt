@@ -55,6 +55,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -1041,7 +1042,79 @@ private fun mcpItems(viewModel: MainViewModel): List<TvItem> {
             stringResource(R.string.setting_shortcuts_renew), stringResource(R.string.setting_shortcuts_renew_desc),
             onClick = { token = io.github.henry753951.airplayremote.mcp.McpToken.renew(ctx) },
         ),
+    ) + cloudItems(viewModel, ip)
+}
+
+/** Spec 012: access from claude.ai through a Cloudflare tunnel. */
+@Composable
+private fun cloudItems(viewModel: MainViewModel, ip: String): List<TvItem> {
+    val ctx = LocalContext.current
+    val on by viewModel.pref(Prefs.CLOUD_ENABLED).collectAsState()
+    val toggleItem = toggle(viewModel, Prefs.CLOUD_ENABLED, R.string.setting_cloud, R.string.setting_cloud_desc)
+    if (!on) return listOf(toggleItem)
+    val state by io.github.henry753951.airplayremote.cloud.CloudTunnel.state.collectAsState()
+    var setup by remember { mutableStateOf(false) }
+    var agents by remember { androidx.compose.runtime.mutableIntStateOf(io.github.henry753951.airplayremote.mcp.McpServer.oauth(ctx).clientCount()) }
+    if (setup) {
+        val code = remember { io.github.henry753951.airplayremote.mcp.McpServer.setupCode.renew() }
+        CloudSetupDialog("http://$ip:${io.github.henry753951.airplayremote.mcp.McpHttp.PORT}/setup?code=$code", code) { setup = false }
+    }
+    val status = stringResource(
+        when (state.status) {
+            io.github.henry753951.airplayremote.cloud.CloudState.Status.OFF -> R.string.tv_state_off
+            io.github.henry753951.airplayremote.cloud.CloudState.Status.NO_TOKEN -> R.string.setting_cloud_no_token
+            io.github.henry753951.airplayremote.cloud.CloudState.Status.STARTING -> R.string.setting_cloud_starting
+            io.github.henry753951.airplayremote.cloud.CloudState.Status.CONNECTED -> R.string.setting_cloud_connected
+            io.github.henry753951.airplayremote.cloud.CloudState.Status.RETRYING -> R.string.setting_cloud_retrying
+        }
     )
+    val url = state.hostname?.let { "https://$it${io.github.henry753951.airplayremote.mcp.McpHttp.PATH}" }
+    return listOf(
+        toggleItem,
+        TvItem(
+            stringResource(R.string.setting_cloud_status), url ?: stringResource(R.string.setting_cloud_status_desc),
+            value = status,
+            detail = listOfNotNull(
+                url?.let { stringResource(R.string.setting_cloud_connector, it) },
+                state.error,
+                state.lines.takeLast(6).joinToString("\n").takeIf { it.isNotEmpty() },
+            ).joinToString("\n\n").ifEmpty { null },
+        ),
+        TvItem(
+            stringResource(R.string.setting_cloud_token), stringResource(R.string.setting_cloud_token_desc),
+            onClick = { setup = true },
+        ),
+        TvItem(
+            stringResource(R.string.setting_cloud_revoke), stringResource(R.string.setting_cloud_revoke_desc, agents),
+            onClick = {
+                io.github.henry753951.airplayremote.mcp.McpServer.oauth(ctx).revokeAll()
+                agents = 0
+            },
+        ),
+    )
+}
+
+/** The QR code of the local setup page, where the phone pastes the tunnel token (spec 012 D6). */
+@Composable
+private fun CloudSetupDialog(url: String, code: String, onDismiss: () -> Unit) {
+    val qr = remember(url) {
+        val m = com.google.zxing.qrcode.QRCodeWriter().encode(url, com.google.zxing.BarcodeFormat.QR_CODE, 360, 360)
+        val b = android.graphics.Bitmap.createBitmap(m.width, m.height, android.graphics.Bitmap.Config.RGB_565)
+        for (y in 0 until m.height) for (x in 0 until m.width) b.setPixel(x, y, if (m.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+        b.asImageBitmap()
+    }
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.widthIn(min = 460.dp, max = 720.dp).clip(RoundedCornerShape(24.dp)).background(TvTile).padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(stringResource(R.string.setting_cloud_token), color = TvText, fontSize = 24.sp, fontWeight = FontWeight.Light)
+            Spacer(Modifier.height(16.dp))
+            androidx.compose.foundation.Image(qr, contentDescription = url, modifier = Modifier.size(260.dp))
+            Spacer(Modifier.height(16.dp))
+            Text(stringResource(R.string.setting_cloud_setup_hint, url, code), color = TvMuted, fontSize = 16.sp)
+        }
+    }
 }
 
 internal fun mcpCommand(url: String, token: String) =

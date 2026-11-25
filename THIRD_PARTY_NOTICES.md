@@ -31,6 +31,7 @@ Native dependencies are pinned Git submodules:
 | libplist | https://github.com/libimobiledevice/libplist | LGPL-2.1-or-later; bundled components retain their notices |
 | openssl-cmake | https://github.com/viaduck/openssl-cmake | MIT |
 | OpenSSL | https://github.com/openssl/openssl | Apache-2.0 |
+| cloudflared (release binary 2026.11.2, SHA-256 checked at build time) | https://github.com/cloudflare/cloudflared | Apache-2.0 |
 
 AndroidX, Oboe and other Android dependencies retain their own license terms.
 The pinned source revisions and license files are included in the complete source

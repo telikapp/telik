@@ -24,6 +24,7 @@ Homebridge, server or iPhone app.
 - Experimental TV audio output to a HomePod.
 - A Headphones button on the home screen connects and disconnects AirPods. An optional setting connects them when the TV turns on. Needs network debugging on the TV.
 - Optional control by AI agents such as Claude Code over MCP in the local network, with a token. Off by default.
+  With a Cloudflare tunnel, Claude on the phone and on claude.ai connects too, after an OK on the TV.
   See [docs/MCP.md](docs/MCP.md).
 - No root. After setup, only the Headphones button uses a local ADB connection. Services start after the TV boots.
 

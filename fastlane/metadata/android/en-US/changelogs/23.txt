@@ -1,1 +1,2 @@
-AI agents such as Claude Code can control the TV over MCP in the local network: read the screen, open apps, press keys, control media. Off by default, needs a token.
+AI agents such as Claude Code can control the TV over MCP: read the screen, open apps, press keys, control media, turn the TV off and on. Off by default, needs a token.
+With your Cloudflare tunnel, Claude on the phone and on claude.ai connects too. The TV asks for your OK.

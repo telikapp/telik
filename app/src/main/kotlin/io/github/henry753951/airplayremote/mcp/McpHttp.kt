@@ -13,8 +13,10 @@ object McpHttp {
     private const val MAX_LINE = 8192
     private const val MAX_HEADERS = 64
 
-    class Request(val method: String, val path: String, val headers: Map<String, String>, val body: ByteArray) {
+    class Request(val method: String, val path: String, val headers: Map<String, String>, val body: ByteArray, val query: String = "") {
         fun header(name: String): String? = headers[name.lowercase()]
+        fun params(): Map<String, String> = McpHttp.form(query)
+        fun form(): Map<String, String> = McpHttp.form(String(body, Charsets.UTF_8))
     }
 
     class BadRequest(val status: Int, message: String) : Exception(message)
@@ -43,7 +45,7 @@ object McpHttp {
             if (n < 0) throw BadRequest(400, "short body")
             off += n
         }
-        return Request(parts[0], parts[1].substringBefore('?'), headers, body)
+        return Request(parts[0], parts[1].substringBefore('?'), headers, body, parts[1].substringAfter('?', ""))
     }
 
     private fun readLine(input: InputStream): String? {
@@ -73,19 +75,31 @@ object McpHttp {
         return false
     }
 
-    fun response(status: Int, body: String? = null, contentType: String = "application/json"): ByteArray {
+    /** `a=1&b=x%20y` to a map. The last value of a key wins. */
+    fun form(text: String): Map<String, String> = text.split('&').filter { it.isNotEmpty() }.associate { part ->
+        fun dec(s: String) = runCatching { java.net.URLDecoder.decode(s, "UTF-8") }.getOrDefault("")
+        dec(part.substringBefore('=')) to dec(part.substringAfter('=', ""))
+    }
+
+    fun response(
+        status: Int,
+        body: String? = null,
+        contentType: String = "application/json",
+        headers: Map<String, String> = emptyMap(),
+    ): ByteArray {
         val bytes = body?.toByteArray(Charsets.UTF_8) ?: ByteArray(0)
         val head = StringBuilder("HTTP/1.1 $status ${reason(status)}\r\n")
         if (body != null) head.append("Content-Type: $contentType\r\n")
         head.append("Content-Length: ${bytes.size}\r\n")
         if (status == 405) head.append("Allow: POST\r\n")
-        if (status == 401) head.append("WWW-Authenticate: Bearer\r\n")
+        if (status == 401 && "WWW-Authenticate" !in headers) head.append("WWW-Authenticate: Bearer\r\n")
+        headers.forEach { (k, v) -> head.append(k).append(": ").append(v.replace("\r", "").replace("\n", "")).append("\r\n") }
         head.append("Cache-Control: no-store\r\nConnection: close\r\n\r\n")
         return head.toString().toByteArray(Charsets.UTF_8) + bytes
     }
 
     private fun reason(status: Int) = when (status) {
-        200 -> "OK"; 202 -> "Accepted"; 400 -> "Bad Request"; 401 -> "Unauthorized"; 403 -> "Forbidden"
+        200 -> "OK"; 201 -> "Created"; 202 -> "Accepted"; 302 -> "Found"; 400 -> "Bad Request"; 401 -> "Unauthorized"; 403 -> "Forbidden"
         404 -> "Not Found"; 405 -> "Method Not Allowed"; 411 -> "Length Required"; 413 -> "Payload Too Large"
         415 -> "Unsupported Media Type"; 431 -> "Request Header Fields Too Large"; else -> "Error"
     }

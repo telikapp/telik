@@ -122,6 +122,8 @@ object Prefs {
     val SHORTCUTS_ENABLED = bool("shortcuts_enabled", false)
     /** Spec 011: the MCP server for agents on the local network. Off by default (FR-009). */
     val MCP_ENABLED = bool("mcp_enabled", false)
+    /** Spec 012: the Cloudflare tunnel for claude.ai. Off by default (FR-002). */
+    val CLOUD_ENABLED = bool("cloud_enabled", false)
     /** Spec 006 US9: the city for the weather. Empty: the city of the time zone. */
     val WEATHER_CITY = str("weather_city", "") { it.length <= 80 && it.none(Char::isISOControl) }
 }

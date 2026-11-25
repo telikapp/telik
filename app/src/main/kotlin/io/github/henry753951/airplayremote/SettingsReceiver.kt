@@ -14,6 +14,12 @@ open class SettingsReceiver : BroadcastReceiver() {
             ACTION_SET, InstallationContract.LEGACY_SET_SETTING -> _set(prefs, intent.getStringExtra(EXTRA_KEY), intent.getStringExtra(EXTRA_VALUE))
             ACTION_LIST, InstallationContract.LEGACY_LIST_SETTINGS -> _reply(true, _list(prefs))
             // Spec 011 FR-014: the token of the agent server from adb, so that it is not read off the screen.
+            // Spec 012 FR-003: the Cloudflare tunnel token from adb.
+            ACTION_SET_CLOUD_TOKEN -> {
+                val ok = io.github.henry753951.airplayremote.cloud.CloudToken.set(context, intent.getStringExtra(EXTRA_TOKEN).orEmpty())
+                if (ok) io.github.henry753951.airplayremote.cloud.CloudTunnel.sync(context)
+                _reply(ok, if (ok) "cloud token set" else "invalid tunnel token")
+            }
             ACTION_SET_MCP_TOKEN -> {
                 val ok = io.github.henry753951.airplayremote.mcp.McpToken.set(context, intent.getStringExtra(EXTRA_TOKEN).orEmpty())
                 _reply(ok, if (ok) "mcp token set" else "invalid token: 20-128 of A-Z a-z 0-9 _ -")
@@ -46,5 +52,6 @@ open class SettingsReceiver : BroadcastReceiver() {
         const val EXTRA_VALUE = "value"
         const val ACTION_SET_MCP_TOKEN = "io.github.henry753951.airplayremote.SET_MCP_TOKEN"
         const val EXTRA_TOKEN = "token"
+        const val ACTION_SET_CLOUD_TOKEN = "io.github.henry753951.airplayremote.SET_CLOUD_TOKEN"
     }
 }

@@ -80,6 +80,8 @@ class TvTools(private val context: Context, private val events: TvEvents) {
                 "seconds?" to "integer:skip by, minus to go back", "package?" to "string:session, default the active one"), action = true) { a -> media(a) },
         McpTool("tv_rows", "TV Provider rows of apps: watch_next, preview (home channels' programs) or channels, with the intent uri for open.",
             listOf("kind?" to "enum(watch_next|preview|channels):default watch_next", "package?" to "string", "max?" to "integer:default 20")) { a -> tvRows(a.strOrNull("kind") ?: "watch_next", a.strOrNull("package"), a.intOrNull("max") ?: 20) },
+        McpTool("power", "TV power: status, off (standby, network stays on if the TV allows it) or on.",
+            listOf("action?" to "enum(status|on|off):default status"), action = true) { a -> power(a.strOrNull("action") ?: "status") },
         McpTool("recipe", "Tested steps for an app (YouTube, KinoPub, Apple TV): find and play content, pause, seek, now playing.",
             listOf("package?" to "string:no package: list")) { a -> ToolResult(Recipes.text(a.strOrNull("package"))) },
         McpTool("debug", "adb data of the TV for debug: activity, window, media or logcat of a package. Needs network debugging.",
@@ -550,6 +552,44 @@ class TvTools(private val context: Context, private val events: TvEvents) {
         return ToolResult("$total $kind rows${if (total > lines.size) ", ${lines.size} shown" else ""}\n" + lines.joinToString("\n"))
     }
 
+    // ---- Power ----
+
+    private val powerManager by lazy { context.getSystemService(android.os.PowerManager::class.java) }
+
+    private fun powerState() = if (powerManager.isInteractive) "on" else "standby"
+
+    /** As the TV tile of Apple Home (TvAccessory): off is the lock screen action, on is a wake lock. */
+    private fun power(action: String): ToolResult {
+        when (action) {
+            "status" -> return ToolResult("power: ${powerState()}")
+            "off" -> {
+                if (!powerManager.isInteractive) return ToolResult("power: standby already")
+                if (!onMain { service().performGlobalAction(AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN) }) throw ToolError("the TV refused standby")
+            }
+            "on" -> {
+                if (powerManager.isInteractive) return ToolResult("power: on already")
+                onMain { wake() }
+            }
+            else -> throw ToolError("unknown power action: $action")
+        }
+        val want = action == "on"
+        val start = SystemClock.uptimeMillis()
+        while (powerManager.isInteractive != want && SystemClock.uptimeMillis() - start < POWER_WAIT_MS) SystemClock.sleep(200)
+        return ToolResult("power: ${powerState()} after ${SystemClock.uptimeMillis() - start} ms")
+    }
+
+    @Suppress("DEPRECATION")
+    private fun wake() {
+        powerManager.newWakeLock(
+            android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK or android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP, "telik:mcp-wake",
+        ).acquire(3000)
+        main.postDelayed({
+            if (!powerManager.isInteractive) {
+                runCatching { (RemoteAccessibilityService.instance ?: context).startActivity(Intent(context, dev.tvhomekit.WakeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            }
+        }, 500)
+    }
+
     // ---- Debug over the local adb port ----
 
     private fun debug(kind: String, pkg: String?, lines: Int): ToolResult {
@@ -578,6 +618,7 @@ class TvTools(private val context: Context, private val events: TvEvents) {
         const val KEY_GAP_MS = 120L
         const val MEDIA_SETTLE_MS = 400L
         const val MAX_DEBUG = 16_000
+        const val POWER_WAIT_MS = 5_000L
         val PACKAGE = Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+")
         val BLOCKED = setOf(
             Intent.ACTION_DELETE, "android.intent.action.UNINSTALL_PACKAGE", "android.intent.action.INSTALL_PACKAGE",
