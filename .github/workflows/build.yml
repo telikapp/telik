@@ -57,7 +57,7 @@ jobs:
             printf 'keyPassword=%s\n' "$PASSWORD"
           } >> local.properties
       - name: Build, unit test and lint
-        run: ./gradlew :app:testDebugUnitTest :app:assembleRelease :app:lintRelease --max-workers 4
+        run: ./gradlew :app:testDebugUnitTest :app:assembleRelease :app:lintRelease --max-workers 4 --stacktrace
       - name: Check whitespace
         run: git diff --check
       - name: Upload signed test APK

@@ -48,7 +48,7 @@ jobs:
         run: |
           (cd remote && cargo test --locked -p atv-core)
           scripts/build-remote.sh
-          ./gradlew :app:testDebugUnitTest :app:assembleRelease --max-workers 4
+          ./gradlew :app:testDebugUnitTest :app:assembleRelease --max-workers 4 --stacktrace
       - name: Package
         env:
           TAG: ${{ github.ref_name }}
